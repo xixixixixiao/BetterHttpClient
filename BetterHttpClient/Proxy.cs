@@ -40,9 +40,12 @@ namespace BetterHttpClient
             ProxyItem = new WebProxy(ip, port);
         }
 
-        public Proxy(string ip, int port, ProxyTypeEnum proxyType)
+        public Proxy(string ip, int port, ProxyTypeEnum proxyType, NetworkCredential credentials)
         {
-            ProxyItem = new WebProxy(ip, port);
+            ProxyItem = new WebProxy(ip, port)
+            {
+                Credentials = credentials
+            };
             ProxyType = proxyType;
         }
 

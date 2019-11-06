@@ -319,35 +319,68 @@ namespace BetterHttpClient.Socks
                 var proxyUri = Proxy.GetProxy(requestUri);
                 var ipAddress = GetProxyIpAddress(proxyUri);
                 var response = new List<byte>();
+                int timeout = Timeout;
+                if (timeout == 0)
+                    timeout = 30 * 1000;
 
-                using (var client = new TcpClient(ipAddress.ToString(), proxyUri.Port))
+                using (var client = new TcpClient(ipAddress.ToString(), proxyUri.Port)
                 {
-                    int timeout = Timeout;
-                    if (timeout == 0)
-                        timeout = 30 * 1000;
-                    client.ReceiveTimeout = timeout;
-                    client.SendTimeout = timeout;
-                    var networkStream = client.GetStream();
+                    ReceiveTimeout = timeout,
+                    SendTimeout = timeout
+                })
+                using (var networkStream = client.GetStream())
+                {
                     // auth
                     var buf = new byte[300];
                     buf[0] = 0x05; // Version
-                    buf[1] = 0x01; // NMETHODS
+                    var addedAuthMethods = 0;
+                    if (Proxy.Credentials != null)
+                    {
+                        buf[3] = 0x02; // UserName/Password rfc1929
+                        addedAuthMethods = 1;
+                    }
+                    buf[1] = (Byte)(1 + addedAuthMethods); // NMETHODS
                     buf[2] = 0x00; // No auth-method
-                    networkStream.Write(buf, 0, 3);
+
+                    networkStream.Write(buf, 0, 3 + addedAuthMethods);
 
                     networkStream.Read(buf, 0, 2);
                     if (buf[0] != 0x05)
                     {
                         throw new IOException("Invalid Socks Version");
                     }
-                    if (buf[1] == 0xff)
+
+                    if (Proxy.Credentials != null && buf[1] == 0x02)
+                    {
+                        var creds = Proxy.Credentials.GetCredential(requestUri, null);
+                        var uNameBytes = Encoding.ASCII.GetBytes(creds.UserName);
+                        var uPassBytes = Encoding.ASCII.GetBytes(creds.Password);
+                        buf[0] = 0x01;
+                        buf[1] = Convert.ToByte(uNameBytes.Length);
+                        uNameBytes.CopyTo(buf, 2);
+                        var ind = 2 + uNameBytes.Length;
+
+                        buf[ind] = Convert.ToByte(uPassBytes.Length);
+                        ind += 1;
+                        uPassBytes.CopyTo(buf, ind);
+                        ind += uPassBytes.Length;
+
+                        networkStream.Write(buf, 0, ind);
+                        networkStream.Read(buf, 0, 2);
+                        if (buf[1] != 0x00)
+                        {
+                            throw new IOException("Socks Server auth user/pass failed.");
+                        }
+                    }
+                    else if (buf[1] == 0xff)
                     {
                         throw new IOException("Socks Server does not support no-auth");
                     }
-                    if (buf[1] != 0x00)
+                    else if (buf[1] != 0x00)
                     {
                         throw new Exception("Socks Server did choose bogus auth");
                     }
+
 
                     // connect
                     var index = 0;
@@ -384,6 +417,7 @@ namespace BetterHttpClient.Socks
                     {
                         throw new IOException("Invalid Socks Version");
                     }
+
                     if (buf[1] != 0x00)
                     {
                         string err;
@@ -399,8 +433,10 @@ namespace BetterHttpClient.Socks
                             case 0x08: err = "Address type not supported"; break;
                             default: err = $"Socks Error {buf[1]:X}"; break;
                         }
+
                         throw new IOException(err);
                     }
+
                     var rdest = string.Empty; // TOFIX : usefull ????
                     switch (buf[3])
                     {
@@ -415,6 +451,7 @@ namespace BetterHttpClient.Socks
                             {
                                 throw new IOException("Invalid Domain Name");
                             }
+
                             networkStream.Read(buf, 1, buf[0]);
                             rdest = Encoding.ASCII.GetString(buf, 1, buf[0]);
                             break;
@@ -426,6 +463,7 @@ namespace BetterHttpClient.Socks
                         default:
                             throw new IOException("Invalid Address type");
                     }
+
                     networkStream.Read(buf, 0, 2);
                     var rport = (ushort)IPAddress.NetworkToHostOrder((short)BitConverter.ToUInt16(buf, 0));
 
