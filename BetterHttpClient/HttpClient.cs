@@ -212,7 +212,7 @@ namespace BetterHttpClient
         /// <returns></returns>
         public string Get(string url)
         {
-            return Encoding.GetString(DownloadBytes(url, null));
+            return Encoding.GetString(Download(url, null, null));
         }
         /// <summary>
         /// Execute POST request.
