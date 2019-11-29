@@ -232,7 +232,7 @@ namespace BetterHttpClient
         /// <returns></returns>
         public byte[] DownloadBytes(string url)
         {
-            return DownloadBytes(url, null);
+            return Download(url, null, null);
         }
         /// <summary>
         /// Excecute POST request.
@@ -241,6 +241,16 @@ namespace BetterHttpClient
         /// <param name="data"></param>
         /// <returns></returns>
         public byte[] DownloadBytes(string url, NameValueCollection data)
+        {
+            return Download(url, data, null);
+        }
+
+        public byte[] DownloadBytes(string url, String data)
+        {
+            return Download(url, null, data);
+        }
+
+        byte[] Download(string url, NameValueCollection data, String dataStr)
         {
             int counter = 0;
             WebException lastWebException = null;
@@ -255,7 +265,9 @@ namespace BetterHttpClient
                     else if (unkownProxy)
                         Proxy.ProxyType = ProxyTypeEnum.Socks;
 
-                    byte[] result = data == null ? Encoding.GetBytes(DownloadString(url)) : UploadValues(url, data);
+                    byte[] result = data == null
+                        ? Encoding.GetBytes(dataStr == null ? DownloadString(url) : UploadString(url, dataStr))
+                        : UploadValues(url, data);
                     return result;
                 }
                 catch (WebException e)
