@@ -226,6 +226,17 @@ namespace BetterHttpClient
         }
 
         /// <summary>
+        /// Execute POST request.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public string Post(string url, String data)
+        {
+            return Encoding.GetString(DownloadBytes(url, data));
+        }
+
+        /// <summary>
         /// Execute GET request.
         /// </summary>
         /// <param name="url"></param>
