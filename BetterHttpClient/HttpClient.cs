@@ -144,9 +144,10 @@ namespace BetterHttpClient
             else
             {
                 request = SocksHttpWebRequest.Create(address);
-                request.Method = base.GetWebRequest(address).Method;
-                request.ContentLength = base.GetWebRequest(address).ContentLength;
-                request.ContentType = base.GetWebRequest(address).ContentType;
+                var br = base.GetWebRequest(address);
+                request.Method = br.Method;
+                request.ContentLength = br.ContentLength;
+                request.ContentType = br.ContentType;
             }
 
 
