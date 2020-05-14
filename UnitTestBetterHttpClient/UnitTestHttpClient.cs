@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
 using System.Text;
 using BetterHttpClient;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
