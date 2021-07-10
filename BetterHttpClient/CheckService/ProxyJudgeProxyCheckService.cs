@@ -8,7 +8,7 @@ namespace BetterHttpClient.CheckService
     {
         public override bool IsProxyAnonymous(Proxy proxy)
         {
-            HttpClient client = new HttpClient(proxy, Encoding.UTF8)
+            var client = new HttpClient(proxy, Encoding.UTF8)
             {
                 NumberOfAttempts = NumberOfAttempts
             };
@@ -32,10 +32,10 @@ namespace BetterHttpClient.CheckService
 
         protected override string GetMyIp()
         {
-            HttpClient client = new HttpClient(Encoding.UTF8);
-            string page = client.Get("http://proxyjudge.info/");
+            var client = new HttpClient(Encoding.UTF8);
+            var page = client.Get("http://proxyjudge.info/");
 
-            Match match = Regex.Match(page, "REMOTE_ADDR = (.*?)\\n");
+            var match = Regex.Match(page, "REMOTE_ADDR = (.*?)\\n");
             if (!match.Success)
                 throw new GetMyIpException();
             else

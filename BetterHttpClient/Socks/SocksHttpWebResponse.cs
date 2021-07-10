@@ -12,8 +12,8 @@ namespace BetterHttpClient.Socks
     {
         #region Member Variables
 
-        private WebHeaderCollection _httpResponseHeaders;
-        private Uri responseUri;
+        private          WebHeaderCollection _httpResponseHeaders;
+        private readonly Uri                 responseUri;
 
         #endregion
 
@@ -84,7 +84,7 @@ namespace BetterHttpClient.Socks
             ResponseContent = new byte[responseMessage.Length - headerEnd - 4];
             Array.Copy(responseMessage, headerEnd + 4, ResponseContent, 0, ResponseContent.Length);
 
-            string transferEncoding = Headers["Transfer-Encoding"];
+            var transferEncoding = Headers["Transfer-Encoding"];
 
             switch (transferEncoding)
             {
@@ -93,7 +93,7 @@ namespace BetterHttpClient.Socks
                     break;
             }
 
-            string contentEncoding = Headers["Content-Encoding"];
+            var contentEncoding = Headers["Content-Encoding"];
 
             switch (contentEncoding)
             {
@@ -105,49 +105,47 @@ namespace BetterHttpClient.Socks
 
         private void DechunkContent()
         {
-            using (var output = new MemoryStream())
-            using (var ms = new MemoryStream(ResponseContent))
+            using var output = new MemoryStream();
+            using var ms     = new MemoryStream(ResponseContent);
+            while (true)
             {
+                var infoLine = new StringBuilder();
                 while (true)
                 {
-                    var infoLine = new StringBuilder();
-                    while (true)
+                    var b = ms.ReadByte();
+
+                    if (b == -1)
+                        // End of stream
+                        break;
+
+                    if (b == 13)
+                        // Ignore
+                        continue;
+
+                    if (b == 10)
                     {
-                        int b = ms.ReadByte();
-
-                        if (b == -1)
-                            // End of stream
-                            break;
-
-                        if (b == 13)
-                            // Ignore
+                        if (infoLine.Length == 0)
+                            // Trim
                             continue;
-
-                        if (b == 10)
-                        {
-                            if (infoLine.Length == 0)
-                                // Trim
-                                continue;
-                            else
-                                break;
-                        }
-
-                        infoLine.Append((char)b);
+                        else
+                            break;
                     }
-                    if (infoLine.Length == 0)
-                        break;
 
-                    int chunkLength = int.Parse(infoLine.ToString(), System.Globalization.NumberStyles.HexNumber);
-                    if (chunkLength == 0)
-                        break;
-
-                    var buffer = new byte[chunkLength];
-                    ms.Read(buffer, 0, chunkLength);
-                    output.Write(buffer, 0, buffer.Length);
+                    infoLine.Append((char)b);
                 }
+                if (infoLine.Length == 0)
+                    break;
 
-                ResponseContent = output.ToArray();
+                var chunkLength = int.Parse(infoLine.ToString(), System.Globalization.NumberStyles.HexNumber);
+                if (chunkLength == 0)
+                    break;
+
+                var buffer = new byte[chunkLength];
+                ms.Read(buffer, 0, chunkLength);
+                output.Write(buffer, 0, buffer.Length);
             }
+
+            ResponseContent = output.ToArray();
         }
 
         #endregion
@@ -158,13 +156,7 @@ namespace BetterHttpClient.Socks
 
         public string StatusDescription { get; private set; }
 
-        public override Uri ResponseUri
-        {
-            get
-            {
-                return this.responseUri;
-            }
-        }
+        public override Uri ResponseUri => this.responseUri;
 
         private static readonly byte[] GZipHeaderBytes = { 0x1f, 0x8b, 8, 0, 0, 0, 0, 0, 4, 0 };
         private static readonly byte[] GZipLevel10HeaderBytes = { 0x1f, 0x8b, 8, 0, 0, 0, 0, 0, 2, 0 };
@@ -206,24 +198,20 @@ namespace BetterHttpClient.Socks
         {
             try
             {
-                using (var stream = new GZipStream(new MemoryStream(gzip), CompressionMode.Decompress))
+                using var stream = new GZipStream(new MemoryStream(gzip), CompressionMode.Decompress);
+                const int size   = 4096;
+                var       buffer = new byte[size];
+                using var memory = new MemoryStream();
+                var       count  = 0;
+                do
                 {
-                    const int size = 4096;
-                    var buffer = new byte[size];
-                    using (var memory = new MemoryStream())
+                    count = stream.Read(buffer, 0, size);
+                    if (count > 0)
                     {
-                        var count = 0;
-                        do
-                        {
-                            count = stream.Read(buffer, 0, size);
-                            if (count > 0)
-                            {
-                                memory.Write(buffer, 0, count);
-                            }
-                        } while (count > 0);
-                        return memory.ToArray();
+                        memory.Write(buffer, 0, count);
                     }
-                }
+                } while (count > 0);
+                return memory.ToArray();
             }
             catch (Exception)
             {
@@ -261,8 +249,8 @@ namespace BetterHttpClient.Socks
 
         public override long ContentLength
         {
-            get { return ResponseContent.Length; }
-            set { throw new NotSupportedException(); }
+            get => ResponseContent.Length;
+            set => throw new NotSupportedException();
         }
 
         #endregion

@@ -1,22 +1,22 @@
+using BetterHttpClient.CheckService;
 using System;
 using System.Net;
-using BetterHttpClient.CheckService;
 
 namespace BetterHttpClient
 {
     public class Proxy : ICloneable
     {
-        private volatile bool _isBusy = false;
-        private bool _isAnonymous;
-        private bool _isChecked = false;
+        private volatile bool _isBusy;
+        private          bool _isAnonymous;
+        private          bool _isChecked;
 
         /// <summary>
         /// Check if proxy is busy.
         /// </summary>
         public bool IsBusy
         {
-            get { return _isBusy; }
-            internal set { _isBusy = value; }
+            get => _isBusy;
+            internal set => _isBusy = value;
         }
 
 

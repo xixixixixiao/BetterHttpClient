@@ -14,19 +14,19 @@ namespace UnitTestBetterHttpClient
         [TestMethod]
         public void TestGet()
         {
-            HttpClient client = new HttpClient
+            var client = new HttpClient
             {
                 UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0"
             };
 
-            string page = client.Get("http://www.google.com");
+            var page = client.Get("http://www.google.com");
             Assert.IsTrue(page.Contains("<title>Google</title>"));
         }
 
         [TestMethod]
         public void TestPost()
         {
-            HttpClient client = new HttpClient
+            var client = new HttpClient
             {
                 UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0"
             };
@@ -38,7 +38,7 @@ namespace UnitTestBetterHttpClient
             var delivery = "now";
             var comments = "fast";
 
-            string page = client.Post("https://httpbin.org/post", new NameValueCollection
+            var page = client.Post("https://httpbin.org/post", new NameValueCollection
             {
                 {"custname", customerName},
                 {"custtel", phone},
@@ -49,7 +49,7 @@ namespace UnitTestBetterHttpClient
                 {"comments", comments}
             });
 
-            Form root = JsonConvert.DeserializeObject<RootObject>(page).form;
+            var root = JsonConvert.DeserializeObject<RootObject>(page).form;
 
             Assert.AreEqual(root.custname, customerName);
             Assert.AreEqual(root.custtel, phone);
@@ -64,25 +64,25 @@ namespace UnitTestBetterHttpClient
         [TestMethod]
         public void TestUserAgent()
         {
-            HttpClient client = new HttpClient
+            var client = new HttpClient
             {
                 UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0"
             };
 
-            string page = client.Get("https://httpbin.org/user-agent");
+            var page = client.Get("https://httpbin.org/user-agent");
             Assert.IsTrue(page.Contains(client.UserAgent));
         }
 
         [TestMethod]
         public void TestGzipDecodingAndReferer()
         {
-            HttpClient client = new HttpClient
+            var client = new HttpClient
             {
                 UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0",
                 Referer = "https://httpbin.org/"
             };
 
-            string page = client.Get("https://httpbin.org/gzip");
+            var page = client.Get("https://httpbin.org/gzip");
             Assert.IsTrue(page.Contains(client.UserAgent));
             // check for referer
             Assert.IsTrue(page.Contains("https://httpbin.org/"));
@@ -91,62 +91,62 @@ namespace UnitTestBetterHttpClient
         [TestMethod]
         public void TestHttpProxy()
         {
-            HttpClient client = new HttpClient(new Proxy(HttpsProxy))
+            var client = new HttpClient(new Proxy(HttpsProxy))
             {
                 UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0",
                 Encoding = Encoding.GetEncoding("iso-8859-2"),
                 AcceptEncoding = "gzip"
             };
 
-            string page = client.Get("http://darkwarez.pl");
+            var page = client.Get("http://darkwarez.pl");
             Assert.IsTrue(page.Contains("Polskie Forum Warez! Najnowsze linki"));
         }
         [TestMethod]
         public void TestHttpsProxy()
         {
-            HttpClient client = new HttpClient(new Proxy(HttpsProxy))
+            var client = new HttpClient(new Proxy(HttpsProxy))
             {
                 UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0"
             };
 
-            string page = client.Get("https://httpbin.org/get");
+            var page = client.Get("https://httpbin.org/get");
             Assert.IsTrue(page.Contains(client.UserAgent));
         }
         [TestMethod]
         public void TestSocksHttpProxy()
         {
-            HttpClient client = new HttpClient(new Proxy(Socksproxy))
+            var client = new HttpClient(new Proxy(Socksproxy))
             {
                 UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0",
                 Encoding = Encoding.GetEncoding("iso-8859-2"),
                 AcceptEncoding = "deflate"
             };
 
-            string page = client.Get("http://darkwarez.pl/forum/");
+            var page = client.Get("http://darkwarez.pl/forum/");
             Assert.IsTrue(page.Contains("darkwarez.pl - Gry, Muzyka, Filmy, Download"));
         }
         [TestMethod]
         public void TestSocksHttpsProxyDeflateEncoding()
         {
-            HttpClient client = new HttpClient(new Proxy(Socksproxy))
+            var client = new HttpClient(new Proxy(Socksproxy))
             {
                 UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0",
                 AcceptEncoding = "deflate"
             };
 
-            string page = client.Get("https://httpbin.org/get");
+            var page = client.Get("https://httpbin.org/get");
             Assert.IsTrue(page.Contains(client.UserAgent));
         }
         [TestMethod]
         public void TestSocksHttpsProxyGzipEndcoding()
         {
-            HttpClient client = new HttpClient(new Proxy(Socksproxy))
+            var client = new HttpClient(new Proxy(Socksproxy))
             {
                 UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0",
                 AcceptEncoding = "gzip"
             };
 
-            string page = client.Get("https://httpbin.org/get");
+            var page = client.Get("https://httpbin.org/get");
             Assert.IsTrue(page.Contains(client.UserAgent));
         }
         public class Form
